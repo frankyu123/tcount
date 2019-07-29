@@ -3,5 +3,6 @@
 *.a
 *.swp
 *.dSYM
+key_buffer*
 result*
 tcount

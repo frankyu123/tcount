@@ -2,10 +2,14 @@ TCOUNTEXE = tcount
 RESULT = result.rec
 
 build: libjieba.a
+ifeq ($(OS), Darwin)
 	gcc -g main.c lib/hash.c -o $(TCOUNTEXE) -L./ -ljieba -lstdc++ -lm
+else
+	gcc -g -pthread main.c lib/hash.c -o $(TCOUNTEXE) -L./ -ljieba -lstdc++ -lm
+endif
 
 test:
-	./$(TCOUNTEXE) ../dataset/sample_10000.rec
+	./$(TCOUNTEXE) -thread 5 ../dataset/ettoday.rec
 
 libjieba.a:
 	g++ -o jieba.o -c -DLOGGING_LEVEL=LL_WARNING -I./lib/cjieba/deps/ ./lib/cjieba/lib/jieba.cpp

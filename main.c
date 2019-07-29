@@ -53,6 +53,8 @@ int main(int argc, char *argv[])
         }
     }
     writeExternalHash(config);
+    printf("Batch insert %d: already insert %d terms\n", getBatchInsertCnt(), getTotalTermCnt());
+    clearHash();
     free(tmp);
     free(inputBuffer);
     fclose(fin);
@@ -73,7 +75,6 @@ int main(int argc, char *argv[])
     duration = (double) (endusec - startusec) / 1000000.0;
     printf("Merge split files spends %lf sec\n", duration);
 
-    clearHash();
     free(config);
     gettimeofday(&exeEnd, NULL);
     startusec = exeStart.tv_sec * 1000000 + exeStart.tv_usec;

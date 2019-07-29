@@ -8,6 +8,7 @@ typedef struct HashConfig {
     int hashTabSize;
     unsigned long totalMem;
     int keyBufferSize;
+    int thread;
 } HashConfig;
 
 typedef struct HashNodeTable {
@@ -34,5 +35,7 @@ extern void writeExternalHash(HashConfig *);
 extern bool insertHash(char *, HashConfig *);
 extern void clearHash();
 extern bool mergeExternalBucket(HashConfig *);
+extern int getBatchInsertCnt();
+extern int getTotalTermCnt(); 
 
 #endif

@@ -6,10 +6,27 @@
 #include <sys/time.h>
 #include "hash.h"
 
+#ifdef __linux__
+#include <pthread.h>
+#endif
+
+#ifdef __APPLE__
+#include "pthread_barrier.h"
+#endif
+
 #define _HASH_KEY_BUFFER "key_buffer"
 #define _HASH_RESULT "result.rec"
 
 static Hash *hash = NULL;
+static int batchInsertCnt = 0;
+static int totalTermCnt = 0;
+static pthread_barrier_t pbt;
+
+typedef struct ThreadArgs {
+    int low;
+    int high;
+    HashConfig *config;
+} ThreadArgs;
 
 static void initHashInfo()
 {
@@ -176,13 +193,37 @@ static void writeExternalBucket(int hashVal, HashConfig *config)
     }
 }
 
-void writeExternalHash(HashConfig *config)
+static void *thread(void *data)
 {
-    for (int i = 0; i < config->hashTabSize; i++) {
+    ThreadArgs *args = (ThreadArgs *) data;
+    int low = args->low;
+    int high = args->high;
+    
+    for (int i = low; i < high; i++) {
         if (hash->hashTable[i] != 0) {
-            writeExternalBucket(i, config);
+            writeExternalBucket(i, args->config);
         }
     }
+
+    pthread_barrier_wait(&pbt);
+    return NULL;
+}
+
+void writeExternalHash(HashConfig *config)
+{
+    pthread_t tid;
+    pthread_barrier_init(&pbt, NULL, config->thread);
+
+    for (int i = 0; i < config->thread - 1; i++) {
+        ThreadArgs *args = (ThreadArgs *) malloc(sizeof(ThreadArgs));
+        args->low = i * config->hashTabSize / (config->thread - 1);
+        args->high = (i + 1) * config->hashTabSize / (config->thread - 1);
+        args->config = config;
+        pthread_create(&tid, NULL, thread, args);
+    }
+
+    pthread_barrier_wait(&pbt);
+    ++batchInsertCnt;
 }
 
 bool insertHash(char *word, HashConfig *config)
@@ -224,9 +265,11 @@ bool insertHash(char *word, HashConfig *config)
 
     if (hash->info->memUsed >= config->totalMem) {
         writeExternalHash(config);
+        printf("Batch insert %d: already insert %d terms\n", getBatchInsertCnt(), getTotalTermCnt());
         clearHash();
     }
 
+    ++totalTermCnt;
     return true;
 }
 
@@ -249,8 +292,9 @@ HashConfig *initHashConfig(int argc, char *argv[])
 {
     HashConfig *config = malloc(sizeof(HashConfig));
     config->hashTabSize = 1000;
-    config->totalMem = 2000000;
+    config->totalMem = 5000000;
     config->keyBufferSize = 300;
+    config->thread = 5;
 
     for (int i = 0; i < argc; i++) {
         if (strcmp(argv[i], "-m") == 0) {
@@ -259,8 +303,24 @@ HashConfig *initHashConfig(int argc, char *argv[])
             config->keyBufferSize = atoi(argv[i+1]);
         } else if (strcmp(argv[i], "-h") == 0) {
             config->hashTabSize = atoi(argv[i+1]);
+        } else if (strcmp(argv[i], "-thread") == 0) {
+            config->thread = atoi(argv[i+1]);
         }
     }
 
+    if (config->thread < 2) {
+        config->thread = 2;
+    }
+
     return config;
+}
+
+int getBatchInsertCnt()
+{
+    return batchInsertCnt;
+}
+
+int getTotalTermCnt()
+{
+    return totalTermCnt;
 }

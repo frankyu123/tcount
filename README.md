@@ -1,2 +1,2 @@
 # tcount
-An external hash for counting terms in large texts
+A toolkit for counting terms from large texts
