@@ -5,7 +5,7 @@ build: libjieba.a
 	gcc -g main.c lib/hash.c -o $(TCOUNTEXE) -L./ -ljieba -lstdc++ -lm
 
 test:
-	./$(TCOUNTEXE) ../dataset/ettoday.rec
+	./$(TCOUNTEXE) ../dataset/sample_10000.rec
 
 libjieba.a:
 	g++ -o jieba.o -c -DLOGGING_LEVEL=LL_WARNING -I./lib/cjieba/deps/ ./lib/cjieba/lib/jieba.cpp
@@ -19,3 +19,5 @@ endif
 ifeq ($(TCOUNTEXE).dSYM, $(wildcard $(TCOUNTEXE).dSYM))
 	rm -rf $(TCOUNTEXE).dSYM
 endif
+
+	rm libjieba.a jieba.o

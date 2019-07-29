@@ -1,0 +1,3 @@
+[submodule "lib/cjieba"]
+	path = lib/cjieba
+	url = git@github.com:frankyu123/cjieba.git
