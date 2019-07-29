@@ -1,0 +1,7 @@
+.DS_Store
+*.o
+*.a
+*.swp
+*.dSYM
+result*
+tcount
