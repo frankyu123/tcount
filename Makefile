@@ -1,19 +1,15 @@
 TCOUNTEXE = tcount
 RESULT = result.rec
 
-build: libjieba.a
+build:
 ifeq ($(OS), Darwin)
-	gcc -g main.c lib/hash.c -o $(TCOUNTEXE) -L./ -ljieba -lstdc++ -lm
+	gcc -g main.c lib/hash.c -o $(TCOUNTEXE)
 else
-	gcc -g -pthread main.c lib/hash.c -o $(TCOUNTEXE) -L./ -ljieba -lstdc++ -lm
+	gcc -g -pthread main.c lib/hash.c -o $(TCOUNTEXE)
 endif
 
 test:
-	./$(TCOUNTEXE) -thread 5 ../dataset/ettoday.rec
-
-libjieba.a:
-	g++ -o jieba.o -c -DLOGGING_LEVEL=LL_WARNING -I./lib/cjieba/deps/ ./lib/cjieba/lib/jieba.cpp
-	ar rs libjieba.a jieba.o
+	./$(TCOUNTEXE) -thread 5 term_list_sm.txt
 
 clean:
 ifeq ($(TCOUNTEXE), $(wildcard $(TCOUNTEXE)))
@@ -23,5 +19,3 @@ endif
 ifeq ($(TCOUNTEXE).dSYM, $(wildcard $(TCOUNTEXE).dSYM))
 	rm -rf $(TCOUNTEXE).dSYM
 endif
-
-	rm libjieba.a jieba.o

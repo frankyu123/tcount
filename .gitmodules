@@ -1,3 +1,3 @@
-[submodule "lib/cjieba"]
-	path = lib/cjieba
-	url = git@github.com:frankyu123/cjieba.git
+[submodule "tools/cjieba"]
+	path = tools/cjieba
+	url = https://github.com/frankyu123/cjieba.git
