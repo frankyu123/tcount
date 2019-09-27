@@ -2,7 +2,6 @@
 #define _HASH_H_
 
 #include <stdbool.h>
-#define _DEFAULT_BUFFER_SIZE 1024
 
 typedef struct HashConfig {
     int hashTabSize;
@@ -12,15 +11,13 @@ typedef struct HashConfig {
 } HashConfig;
 
 typedef struct HashNodeTable {
-    char *word;
+    char *term;
     int cnt;
-    bool isWriteExternal;
     unsigned long next;
 } HashNodeTable;
 
 typedef struct HashInfo {
     unsigned long topNodeIdx;
-    unsigned long memUsed;
     unsigned long nodeTableSize;
 } HashInfo;
 
@@ -31,11 +28,11 @@ typedef struct Hash {
 } Hash;
 
 extern HashConfig *initHashConfig(int, char *[]);
-extern void writeExternalHash(HashConfig *);
+extern void writeExternalBucket(HashConfig *);
 extern bool insertHash(char *, HashConfig *);
 extern void clearHash();
-extern bool mergeExternalBucket(HashConfig *);
 extern int getBatchInsertCnt();
-extern int getTotalTermCnt(); 
+extern int getTotalTermCnt();
+extern void mergeKBucket(HashConfig *);
 
 #endif

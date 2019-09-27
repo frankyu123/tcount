@@ -3,13 +3,13 @@ RESULT = result.rec
 
 build:
 ifeq ($(OS), Darwin)
-	gcc -g main.c lib/hash.c -o $(TCOUNTEXE)
+	gcc -g -pthread main.c lib/hash.c lib/mergesort.c lib/winner_tree.c -o $(TCOUNTEXE)
 else
-	gcc -g -pthread main.c lib/hash.c -o $(TCOUNTEXE)
+	gcc -g main.c lib/hash.c lib/mergesort.c lib/winner_tree.c -o $(TCOUNTEXE)
 endif
 
 test:
-	./$(TCOUNTEXE) -thread 5 term_list_sm.txt
+	./$(TCOUNTEXE) -thread 5 term_list.txt
 
 clean:
 ifeq ($(TCOUNTEXE), $(wildcard $(TCOUNTEXE)))
@@ -19,3 +19,5 @@ endif
 ifeq ($(TCOUNTEXE).dSYM, $(wildcard $(TCOUNTEXE).dSYM))
 	rm -rf $(TCOUNTEXE).dSYM
 endif
+
+	rm key_buffer_*

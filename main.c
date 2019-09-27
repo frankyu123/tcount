@@ -13,20 +13,24 @@ int main(int argc, char *argv[])
         fin = stdin;
     }
 
-    char *inputBuffer = (char *)malloc(_DEFAULT_MAX_LINE);
-    while (fgets(inputBuffer, _DEFAULT_MAX_LINE, fin) != NULL) {
+    char *inputBuffer = (char *)malloc(config->keyBufferSize);
+    while (fgets(inputBuffer, config->keyBufferSize, fin) != NULL) {
         if (inputBuffer[strlen(inputBuffer)-1] == '\n') {
             inputBuffer[strlen(inputBuffer)-1] = '\0';
         }
         insertHash(inputBuffer, config);
     }
-    writeExternalHash(config);
+    writeExternalBucket(config);
     printf("Batch insert %d: already insert %d terms\n", getBatchInsertCnt(), getTotalTermCnt());
     clearHash();
     free(inputBuffer);
     fclose(fin);
 
-    mergeExternalBucket(config);
+    if (getBatchInsertCnt() > 1) {
+        mergeKBucket(config);
+    } else {
+        rename("key_buffer_1.rec", "result.rec");
+    }
     free(config);
 
     gettimeofday(&end, NULL);

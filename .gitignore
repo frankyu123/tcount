@@ -4,5 +4,6 @@
 *.swp
 *.dSYM
 key_buffer*
+term_list*
 result*
 tcount
