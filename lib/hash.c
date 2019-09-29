@@ -168,12 +168,16 @@ HashConfig *initHashConfig(int argc, char *argv[])
     for (int i = 0; i < argc; i++) {
         if (strcmp(argv[i], "-m") == 0) {
             config->totalMem = atol(argv[i+1]);
+            i += 1;
         } else if (strcmp(argv[i], "-s") == 0) {
             config->keyBufferSize = atoi(argv[i+1]);
+            i += 1;
         } else if (strcmp(argv[i], "-h") == 0) {
             config->hashTabSize = atoi(argv[i+1]);
-        } else if (strcmp(argv[i], "-thread") == 0) {
+            i += 1;
+        } else if (strcmp(argv[i], "-parallel") == 0) {
             config->thread = atoi(argv[i+1]);
+            i += 1;
         }
     }
 

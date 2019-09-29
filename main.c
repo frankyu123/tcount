@@ -1,3 +1,12 @@
+//***************************************************************************
+// Tcount Command
+// @Description : 
+// case -m              : limit total memory usage
+// case -s              : expected key buffer size
+// case -h              : hash table size
+// case -parallel       : number of threads using in sort
+//***************************************************************************
+
 #include "main.h"
 
 int main(int argc, char *argv[]) 

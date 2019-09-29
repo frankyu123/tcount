@@ -9,7 +9,7 @@ else
 endif
 
 test:
-	./$(TCOUNTEXE) -thread 5 term_list.txt
+	./$(TCOUNTEXE) -parallel 5 term_list.txt
 
 clean:
 ifeq ($(TCOUNTEXE), $(wildcard $(TCOUNTEXE)))
@@ -19,5 +19,3 @@ endif
 ifeq ($(TCOUNTEXE).dSYM, $(wildcard $(TCOUNTEXE).dSYM))
 	rm -rf $(TCOUNTEXE).dSYM
 endif
-
-	rm key_buffer_*
