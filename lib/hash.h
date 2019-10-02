@@ -2,10 +2,11 @@
 #define _HASH_H_
 
 #include <stdbool.h>
+#include <sys/types.h>
 
 typedef struct HashConfig {
     int hashTabSize;
-    unsigned long totalMem;
+    uint totalMem;
     int keyBufferSize;
     int thread;
 } HashConfig;
@@ -13,16 +14,16 @@ typedef struct HashConfig {
 typedef struct HashNodeTable {
     char *term;
     int cnt;
-    unsigned long next;
+    int next;
 } HashNodeTable;
 
 typedef struct HashInfo {
-    unsigned long topNodeIdx;
-    unsigned long nodeTableSize;
+    int topNodeIdx;
+    int nodeTableSize;
 } HashInfo;
 
 typedef struct Hash {
-    unsigned long *hashTable;
+    int *hashTable;
     HashNodeTable *nodeTable;
     HashInfo *info;
 } Hash;

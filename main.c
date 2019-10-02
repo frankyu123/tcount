@@ -48,7 +48,12 @@ int main(int argc, char *argv[])
     duration = (double) (endusec - startusec) / 1000000.0;
 
     if (duration > 60.0) {
-        printf("Tcount spends %d min %lf sec\n", (int) duration / 60, fmod(duration, 60.0));
+        int min = (int) duration / 60;
+        if (min > 60) {
+            printf("Tcount spends %d hr %d min %lf sec\n", (int) min / 60, min, fmod(duration, 60.0));
+        } else {
+            printf("Tcount spends %d min %lf sec\n", min, fmod(duration, 60.0));
+        }
     } else {
         printf("Tcount spends %lf sec\n", duration);
     }

@@ -9,7 +9,7 @@ else
 endif
 
 test:
-	./$(TCOUNTEXE) -parallel 5 term_list.txt
+	./$(TCOUNTEXE) -parallel 5 -s 1024 -h 5000 -m 500000000 term_list.txt
 
 clean:
 ifeq ($(TCOUNTEXE), $(wildcard $(TCOUNTEXE)))

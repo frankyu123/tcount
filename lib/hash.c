@@ -3,18 +3,16 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
-#include <sys/types.h>
 #include <sys/time.h>
 #include "hash.h"
 #include "mergesort.h"
 #include "winner_tree.h"
 
 #define _HASH_KEY_BUFFER "key_buffer"
-#define _HASH_RESULT "result.rec"
 
 static Hash *hash = NULL;
 static int _batchInsertCnt = 0;
-static int _totalTermCnt = 0;
+static uint _totalTermCnt = 0;
 static int _fileNum = 1;
 
 static uint hash65(char *term)
@@ -42,8 +40,10 @@ static void newHash(HashConfig *config)
 {
     hash = malloc(sizeof(Hash));
 
-    hash->hashTable = (unsigned long *) malloc(config->hashTabSize * sizeof(unsigned long));
-    memset(hash->hashTable, 0, config->hashTabSize * sizeof(unsigned long));
+    hash->hashTable = (int *) malloc(config->hashTabSize * sizeof(int));
+    for (int i = 0; i < config->hashTabSize; i++) {
+        hash->hashTable[i] = 0;
+    }
 
     hash->info = (HashInfo *) malloc(sizeof(HashInfo));
     initHashInfo(config);
@@ -55,6 +55,21 @@ static void newHash(HashConfig *config)
         hash->nodeTable[i].cnt = 0;
         hash->nodeTable[i].next = 0;
     }
+}
+
+static void resetHash(HashConfig *config)
+{
+    for (int i = 0; i < config->hashTabSize; i++) {
+        hash->hashTable[i] = 0;
+    }
+
+    for (int i = 1; i < hash->info->nodeTableSize; i++) {
+        memset(hash->nodeTable[i].term, '\0', config->keyBufferSize);
+        hash->nodeTable[i].cnt = 0;
+        hash->nodeTable[i].next = 0;
+    }
+
+    hash->info->topNodeIdx = 1;
 }
 
 void clearHash()
@@ -77,7 +92,7 @@ static void setHashNode(char *term, HashConfig *config)
     ++hash->info->topNodeIdx;
 }
 
-static bool checkTermExist(char *term, unsigned long nodeIdx, bool createNewNode, HashConfig *config)
+static bool checkTermExist(char *term, int nodeIdx, bool createNewNode, HashConfig *config)
 {
     if (strcmp(term, hash->nodeTable[nodeIdx].term) == 0) {
         ++hash->nodeTable[nodeIdx].cnt;
@@ -116,6 +131,7 @@ void writeExternalBucket(HashConfig *config)
         writeExternalEntry(hash->nodeTable[idx[i]].term, hash->nodeTable[idx[i]].cnt, fout, config);
     }
     fclose(fout);
+
     ++_fileNum;
     ++_batchInsertCnt;
 }
@@ -131,7 +147,7 @@ bool insertHash(char *term, HashConfig *config)
         hash->hashTable[hashVal] = hash->info->topNodeIdx;
         setHashNode(term, config);
     } else {
-        unsigned long nodeIdx = hash->hashTable[hashVal];
+        int nodeIdx = hash->hashTable[hashVal];
         bool find = false;
 
         while (hash->nodeTable[nodeIdx].next != 0) {
@@ -149,8 +165,8 @@ bool insertHash(char *term, HashConfig *config)
 
     if (hash->info->topNodeIdx == hash->info->nodeTableSize) {
         writeExternalBucket(config);
-        printf("Batch insert %d: already insert %d terms\n", getBatchInsertCnt(), getTotalTermCnt());
-        clearHash();
+        printf("Batch insert %d: already insert %u terms\n", _batchInsertCnt, _totalTermCnt);
+        resetHash(config);
     }
 
     ++_totalTermCnt;
@@ -201,7 +217,6 @@ int getTotalTermCnt()
 void mergeKBucket(HashConfig *config)
 {
     initWinnerTree(_fileNum-1, config->keyBufferSize);
-
     while (true) {
         if (checkWinnerTreeEmpty()) {
             break;
