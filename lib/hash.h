@@ -9,6 +9,7 @@ typedef struct HashConfig {
     uint totalMem;
     int keyBufferSize;
     int thread;
+    int chunk;
 } HashConfig;
 
 typedef struct HashNodeTable {
@@ -17,23 +18,15 @@ typedef struct HashNodeTable {
     int next;
 } HashNodeTable;
 
-typedef struct HashInfo {
-    int topNodeIdx;
-    int nodeTableSize;
-} HashInfo;
-
 typedef struct Hash {
     int *hashTable;
     HashNodeTable *nodeTable;
-    HashInfo *info;
 } Hash;
 
 extern HashConfig *initHashConfig(int, char *[]);
 extern void writeExternalBucket(HashConfig *);
 extern bool insertHash(char *, HashConfig *);
 extern void clearHash();
-extern int getBatchInsertCnt();
-extern int getTotalTermCnt();
-extern void mergeKBucket(HashConfig *);
+extern int getFileNum();
 
 #endif
