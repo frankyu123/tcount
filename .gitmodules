@@ -1,3 +1,0 @@
-[submodule "tools/cjieba"]
-	path = tools/cjieba
-	url = https://github.com/frankyu123/cjieba.git

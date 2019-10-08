@@ -88,7 +88,7 @@ bool insertHash(char *term, HashConfig *config)
         _memUsed = config->hashTabSize * 4;
         _topNodeIdx = 1;
     } else if (_topNodeIdx == _NODE_TABLE_SIZE) {
-        perror("Mem usage > node table size");
+        fprintf(stderr, "Mem usage > node table size\n");
         exit(0);
     }
 
