@@ -85,7 +85,7 @@ bool insertHash(char *term, HashConfig *config)
         for (int i = 0; i < config->hashTabSize; i++) {
             hash->hashTable[i] = 0;
         }
-        _memUsed = config->hashTabSize * 4;
+        _memUsed = sizeof(Hash) + config->hashTabSize * sizeof(int) + sizeof(HashConfig);
         _topNodeIdx = 1;
     } else if (_topNodeIdx == _NODE_TABLE_SIZE) {
         fprintf(stderr, "Mem usage > node table size\n");
@@ -100,7 +100,7 @@ bool insertHash(char *term, HashConfig *config)
         hash->nodeTable[_topNodeIdx].cnt = 1;
         hash->nodeTable[_topNodeIdx].next = 0;
 
-        _memUsed += strlen(term) + 8;
+        _memUsed += strlen(term) + sizeof(HashNodeTable);
         ++_topNodeIdx;
     } else {
         int nodeIdx = hash->hashTable[hashVal];
@@ -125,13 +125,13 @@ bool insertHash(char *term, HashConfig *config)
                 hash->nodeTable[_topNodeIdx].cnt = 1;
                 hash->nodeTable[_topNodeIdx].next = 0;
 
-                _memUsed += strlen(term) + 8;
+                _memUsed += strlen(term) + sizeof(HashNodeTable);
                 ++_topNodeIdx;
             }
         } 
     }
 
-    if (_memUsed >= config->totalMem) {
+    if (_memUsed + (_topNodeIdx * sizeof(int)) >= config->totalMem) {
         writeExternalBucket(config);
         clearHash();
     }

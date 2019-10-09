@@ -1,10 +1,10 @@
 //***************************************************************************
 // Tcount Command
 // @Description : 
-// case -m              : limit total memory usage (approx.)
+// case -m              : limit total memory usage
 // case -s              : expected key buffer size
 // case -h              : hash table size
-// case -parallel       : number of threads using in sort
+// case -parallel       : number of threads
 // case -chunk          : number of external chunk
 //***************************************************************************
 

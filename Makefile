@@ -1,4 +1,5 @@
 TCOUNTEXE = tcount
+NORMEXE = a.out
 
 build:
 ifeq ($(OS), Darwin)
@@ -8,11 +9,15 @@ else
 endif
 
 test:
-	./$(TCOUNTEXE) -s 2048 -h 5000 -m 20000000 ../../../tcount/term_list.txt > result.rec
+	./$(TCOUNTEXE) -s 1024 -h 5000 -m 70000000 ../segmentor/result.txt > result.rec
 
 clean:
 ifeq ($(TCOUNTEXE), $(wildcard $(TCOUNTEXE)))
 	rm $(TCOUNTEXE)
+endif
+
+ifeq ($(NORMEXE), $(wildcard $(NORMEXE)))
+	rm $(NORMEXE)
 endif
 
 ifeq ($(TCOUNTEXE).dSYM, $(wildcard $(TCOUNTEXE).dSYM))
