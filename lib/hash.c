@@ -14,6 +14,7 @@
 
 #define _HASH_KEY_BUFFER "key_buffer"
 #define _HASH_OFFSET "offset"
+#define _TMP_FILE "tmp"
 #define _NODE_TABLE_SIZE 10000000
 
 static Hash *hash = NULL;
@@ -202,7 +203,7 @@ static void *job(void *argv)
     ThreadArgs *args = (ThreadArgs *) argv;
 
     char filename[31];
-    sprintf(filename, "x%c%c", 'a' + (args->idx / 26), 'a' + ((args->idx - 1) % 26));
+    sprintf(filename, "%s%02d", _TMP_FILE, args->idx);
     FILE *fin = fopen(filename, "r");
 
     char *inputBuffer = (char *)malloc(args->config->keyBufferSize);
