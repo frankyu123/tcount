@@ -1,6 +1,7 @@
 //***************************************************************************
-// Tcount Command
-// @Description : 
+// Tcount
+// @Author : Frank Yu
+// @Command : 
 // case -m              : limit total memory usage
 // case -s              : expected key buffer size
 // case -h              : hash table size
@@ -10,28 +11,29 @@
 
 #include "main.h"
 
+#define _BUFFER_SIZE 1024
+
 int main(int argc, char *argv[]) 
 {
     HashConfig *config = initHashConfig(argc, argv);
+    initHash(config);
 
-    FILE *fin = fopen(argv[argc-1], "r");
-    if (argc == 1 || fin == NULL) {
-        fin = stdin;
-    }
+    char cmd[31];
+    sprintf(cmd, "wc -l %s", argv[argc-1]);
+    FILE *fp = popen(cmd, "r");
 
-    char *inputBuffer = (char *)malloc(config->keyBufferSize);
-    while (fgets(inputBuffer, config->keyBufferSize, fin) != NULL) {
-        if (inputBuffer[strlen(inputBuffer)-1] == '\n') {
-            inputBuffer[strlen(inputBuffer)-1] = '\0';
-        }
-        insertHash(inputBuffer, config);
-    }
-    writeExternalBucket(config);
-    clearHash();
-    free(inputBuffer);
-    fclose(fin);
+    char info[_BUFFER_SIZE];
+    memset(info, '\0', _BUFFER_SIZE);
+    fgets(info, _BUFFER_SIZE, fp);
+    int line = (atoi(info) / config->thread) + 1;
+    pclose(fp);
 
-    mergeKFile(getFileNum(), config);
+    memset(cmd, '\0', 31);
+    sprintf(cmd, "split -l %d %s", line, argv[argc-1]);
+    system(cmd);
+
+    batchInsertHash(config);
     free(config);
+
     return 0;
 }

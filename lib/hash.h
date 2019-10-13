@@ -16,6 +16,7 @@ typedef struct HashNodeTable {
     char *term;
     int cnt;
     int next;
+    pthread_mutex_t lock;
 } HashNodeTable;
 
 typedef struct Hash {
@@ -24,9 +25,7 @@ typedef struct Hash {
 } Hash;
 
 extern HashConfig *initHashConfig(int, char *[]);
-extern void writeExternalBucket(HashConfig *);
-extern bool insertHash(char *, HashConfig *);
-extern void clearHash();
-extern int getFileNum();
+extern void initHash(HashConfig *);
+extern void batchInsertHash(HashConfig *);
 
 #endif

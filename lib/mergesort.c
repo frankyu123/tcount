@@ -17,7 +17,7 @@ typedef struct ThreadArgs {
     int high;
 } ThreadArgs;
 
-static pthread_barrier_t pbt;
+static pthread_barrier_t _pbt;
 static HashNodeTable *result;
 static int *idx = NULL;
 static int _hashTableSize;
@@ -40,7 +40,7 @@ static void *thread(void *data)
     int low = args->low;
     int high = args->high;
     qsort(idx + low, high - low + 1, sizeof(int), qcmp);
-    pthread_barrier_wait(&pbt);
+    pthread_barrier_wait(&_pbt);
     return NULL;
 }
 
@@ -81,20 +81,20 @@ int *mergeSort(HashNodeTable **data, int **originIdx, unsigned long size, int ha
 
     // Partition qsort
     pthread_t tids[threadNum];
-    pthread_barrier_init(&pbt, NULL, threadNum + 1);
+    pthread_barrier_init(&_pbt, NULL, threadNum + 1);
     for (int i = 0; i < threadNum; i++) {
         ThreadArgs *args = (ThreadArgs *) malloc(sizeof(ThreadArgs));
         args->low = (i * (size - 1) / threadNum) + 1;
         args->high = (i + 1) * (size - 1) / threadNum;
         pthread_create(&tids[i], NULL, thread, args);
     }
-    pthread_barrier_wait(&pbt);
+    pthread_barrier_wait(&_pbt);
 
     for (int i = 0; i < threadNum; i++) {
         pthread_join(tids[i], NULL);
     }
 
-    pthread_barrier_destroy(&pbt);
+    pthread_barrier_destroy(&_pbt);
 
     // Merge
     for (int i = threadNum / 2; i > 0; i /= 2) {

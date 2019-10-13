@@ -9,6 +9,11 @@ typedef struct TermInfo {
     int cnt;
 } TermInfo;
 
+typedef struct WinnerTree {
+    int *nodeList;
+    TermInfo *nodeValue;
+} WinnerTree;
+
 extern void mergeKFile(int, HashConfig *);
 
 #endif

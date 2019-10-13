@@ -20,15 +20,10 @@ typedef struct ThreadArgs {
     int newFileNo;
 } ThreadArgs;
 
-typedef struct WinnerTree {
-    int *nodeList;
-    TermInfo *nodeValue;
-} WinnerTree;
-
 static int _fileNum;
 static int _nodeNum = 1;
 static HashConfig *config;
-static pthread_barrier_t pbt;
+static pthread_barrier_t _pbt;
 
 static TermInfo *getTermInfo(FILE *fin, FILE *fmap)
 {
@@ -237,7 +232,7 @@ void mergeKFile(int fileNum, HashConfig *conf)
         }
 
         pthread_t tids[threadNum];
-        pthread_barrier_init(&pbt, NULL, threadNum + 1);
+        pthread_barrier_init(&_pbt, NULL, threadNum + 1);
         for (int i = 0; i < threadNum; i++) {
             ThreadArgs *args = (ThreadArgs *) malloc(sizeof(ThreadArgs));
             args->endIdx = cnt + config->chunk * (i + 1);
@@ -249,7 +244,7 @@ void mergeKFile(int fileNum, HashConfig *conf)
             pthread_join(tids[i], NULL);
         }
 
-        pthread_barrier_destroy(&pbt);
+        pthread_barrier_destroy(&_pbt);
         cnt += threadNum * config->chunk;
         fileNum += threadNum;
     }
