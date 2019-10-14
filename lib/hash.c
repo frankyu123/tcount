@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <limits.h>
+#include <sys/stat.h>
 #include "hash.h"
 #include "mergesort.h"
 #include "winner_tree.h"
@@ -14,7 +15,6 @@
 
 #define _HASH_KEY_BUFFER "key_buffer"
 #define _HASH_OFFSET "offset"
-#define _TMP_FILE "tmp"
 #define _NODE_TABLE_SIZE 10000000
 
 static Hash *hash = NULL;
@@ -26,6 +26,7 @@ pthread_mutex_t _hashLock = PTHREAD_MUTEX_INITIALIZER;
 typedef struct ThreadArgs {
     HashConfig *config;
     int idx;
+    char *filename;
 } ThreadArgs;
 
 static uint hash65(char *term)
@@ -71,8 +72,8 @@ HashConfig *initHashConfig(int argc, char *argv[])
         }
     }
 
-    if (config->thread < 2) {
-        config->thread = 2;
+    if (config->thread < 1) {
+        config->thread = 1;
     }
 
     return config;
@@ -202,31 +203,49 @@ static void *job(void *argv)
 {
     ThreadArgs *args = (ThreadArgs *) argv;
 
-    char filename[31];
-    sprintf(filename, "%s%02d", _TMP_FILE, args->idx);
-    FILE *fin = fopen(filename, "r");
+    struct stat st;
+    stat(args->filename, &st);
+    uint size = st.st_size / args->config->thread;
+    uint start = (args->idx - 1) * size;
 
-    char *inputBuffer = (char *)malloc(args->config->keyBufferSize);
-    while (fgets(inputBuffer, args->config->keyBufferSize, fin) != NULL) {
-        if (inputBuffer[strlen(inputBuffer)-1] == '\n') {
-            inputBuffer[strlen(inputBuffer)-1] = '\0';
+    FILE *fin = fopen(args->filename, "r");
+    fseek(fin, start, SEEK_SET);
+
+    char inputBuffer[args->config->keyBufferSize];
+    bool flag = (args->idx == 1) ? true : false;
+    uint buffer = 0;
+    while (buffer <= size) {
+        memset(inputBuffer, '\0', args->config->keyBufferSize);
+        char *res = fgets(inputBuffer, args->config->keyBufferSize, fin);
+        if (res == NULL) {
+            break;
         }
-        insertHash(inputBuffer, args->config);
-    }    
 
-    free(inputBuffer);
+        buffer += strlen(inputBuffer);
+        if (flag) {
+            if (inputBuffer[strlen(inputBuffer)-1] == '\n') {
+                inputBuffer[strlen(inputBuffer)-1] = '\0';
+            }
+            insertHash(inputBuffer, args->config);
+        } else {
+            flag = true;
+        }
+    }
     fclose(fin);
-    remove(filename);
+
     return NULL;
 }
 
-void batchInsertHash(HashConfig *config)
+void batchInsertHash(char *filename, HashConfig *config)
 {
     pthread_t tids[config->thread];
     for (int i = 0; i < config->thread; i++) {
         ThreadArgs *args = malloc(sizeof(ThreadArgs));
         args->config = config;
         args->idx = i + 1;
+        args->filename = (char *) malloc(31);
+        memset(args->filename, '\0', 31);
+        strcpy(args->filename, filename);
         pthread_create(&tids[i], NULL, job, args);
     }
 

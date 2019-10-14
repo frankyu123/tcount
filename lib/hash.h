@@ -26,6 +26,6 @@ typedef struct Hash {
 
 extern HashConfig *initHashConfig(int, char *[]);
 extern void initHash(HashConfig *);
-extern void batchInsertHash(HashConfig *);
+extern void batchInsertHash(char *, HashConfig *);
 
 #endif
