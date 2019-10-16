@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "lib/hash.h"
-#include "lib/winner_tree.h"
+
+#include <hash.h>
+#include <winner_tree.h>
 
 #endif

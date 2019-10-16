@@ -1,14 +1,5 @@
 .DS_Store
-*.o
-*.a
-*.swp
 *.dSYM
 key_buffer*
 offset*
-term_list*
-result*
-verify*
-get_term*
 tcount
-seg
-a.out

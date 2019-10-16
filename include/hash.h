@@ -10,6 +10,7 @@ typedef struct HashConfig {
     int keyBufferSize;
     int thread;
     int chunk;
+    char *output;
 } HashConfig;
 
 typedef struct HashNodeTable {

@@ -3,13 +3,13 @@ UNAME = $(shell uname -s)
 
 build:
 ifeq ($(UNAME), Darwin)
-	gcc main.c lib/hash.c lib/mergesort.c lib/winner_tree.c -o $(TCOUNTEXE)
+	gcc -Iinclude src/tcount.c src/hash.c src/mergesort.c src/winner_tree.c -o $(TCOUNTEXE)
 else
-	gcc -pthread main.c lib/hash.c lib/mergesort.c lib/winner_tree.c -o $(TCOUNTEXE)
+	gcc -Iinclude -pthread src/tcount.c src/hash.c src/mergesort.c src/winner_tree.c -o $(TCOUNTEXE)
 endif
 
 run:
-	./$(TCOUNTEXE) -m 400000000 ../auto-term-generator/term.txt > result_news_v2.rec
+	./$(TCOUNTEXE) -m 400000000 ../dataset/large_term_list.txt > result.rec
 
 clean:
 ifeq ($(TCOUNTEXE), $(wildcard $(TCOUNTEXE)))

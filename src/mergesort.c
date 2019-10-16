@@ -1,15 +1,24 @@
+/**
+ * mergesort.c - implement internal mergesort
+ * 
+ * Author: Frank Yu <frank85515@gmail.com>
+ * 
+ * (C) Copyright 2019 Frank Yu
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "mergesort.h"
+
+#include <mergesort.h>
 
 #ifdef __linux__
 #include <pthread.h>
 #endif
 
 #ifdef __APPLE__
-#include "pthread_barrier.h"
+#include <pthread_barrier.h>
 #endif
 
 typedef struct ThreadArgs {
@@ -18,10 +27,15 @@ typedef struct ThreadArgs {
 } ThreadArgs;
 
 static pthread_barrier_t _pbt;
-static HashNodeTable *result;
-static int *idx = NULL;
-static int _hashTableSize;
+static HashNodeTable *result; // global pointer to unsorted data
+static int *idx = NULL; // global pointer to idx list
 
+/**
+ * qcmp - comparsion function for qsort
+ * @a: left record
+ * @b: right record
+ * Returns <= 0 for a <= b or > 0 for a > b.
+ */
 static int qcmp(const void *a,const void *b)
 {
     int leftIdx = *(int *) a;
@@ -29,12 +43,23 @@ static int qcmp(const void *a,const void *b)
     return strcmp(result[leftIdx].term, result[rightIdx].term);
 }
 
+/**
+ * mcmp - comparsion function for merge
+ * @leftPos: idx for left record 
+ * @rightPos: idx for right record
+ * Returns true for left record <＝ right record or false for left record > right record.
+ */
 static bool mcmp(int leftPos, int rightPos)
 {
     return (strcmp(result[idx[leftPos]].term, result[idx[rightPos]].term) <= 0) ? true : false;
 }
 
-static void *thread(void *data)
+/**
+ * job - pthread job for doing internal qsort
+ * @low: begin idx for each unsorted segment
+ * @hight: last idx for each unsorted segment
+ */
+static void *job(void *data)
 {
     ThreadArgs *args = (ThreadArgs *) data;
     int low = args->low;
@@ -73,11 +98,18 @@ static void merge(int low, int mid, int high)
     free(tmp);
 }
 
-int *mergeSort(HashNodeTable **data, int **originIdx, unsigned long size, int hashTableSize, int threadNum)
+/**
+ * mergeSort - main function for internal mergesort
+ * @data: a pointer to unsorted data 
+ * @originIdx: a pointer to idx list of unsorted data
+ * @size: size for unsorted data
+ * @threadNum: number of threads needed
+ * Returns idx list of sorted data.
+ */
+int *mergeSort(HashNodeTable **data, int **originIdx, unsigned long size, int threadNum)
 {
     result = *data;
     idx = (*originIdx);
-    _hashTableSize = hashTableSize;
 
     // Partition qsort
     pthread_t tids[threadNum];
@@ -86,7 +118,7 @@ int *mergeSort(HashNodeTable **data, int **originIdx, unsigned long size, int ha
         ThreadArgs *args = (ThreadArgs *) malloc(sizeof(ThreadArgs));
         args->low = (i * (size - 1) / threadNum) + 1;
         args->high = (i + 1) * (size - 1) / threadNum;
-        pthread_create(&tids[i], NULL, thread, args);
+        pthread_create(&tids[i], NULL, job, args);
     }
     pthread_barrier_wait(&_pbt);
 

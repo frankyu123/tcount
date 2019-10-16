@@ -1,15 +1,24 @@
+/**
+ * winner_tree.c - implement winner tree for merging multiple key buffers
+ * 
+ * Author: Frank Yu <frank85515@gmail.com>
+ * 
+ * (C) Copyright 2019 Frank Yu
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "winner_tree.h"
+
+#include <winner_tree.h>
 
 #ifdef __linux__
 #include <pthread.h>
 #endif
 
 #ifdef __APPLE__
-#include "pthread_barrier.h"
+#include <pthread_barrier.h>
 #endif
 
 #define _WINNER_TREE_SPLIT_FILE "key_buffer"
@@ -21,10 +30,16 @@ typedef struct ThreadArgs {
 } ThreadArgs;
 
 static int _fileNum;
-static int _nodeNum = 1;
+static int _nodeNum = 1; // total nodes in winner tree
 static HashConfig *config;
 static pthread_barrier_t _pbt;
 
+/**
+ * getTermInfo - get term information from external key buffer
+ * @fin: file pointer to specific key buffer
+ * @fmap: file pointer to offset file of specific key buffer
+ * Returns term information or NULL for EOF or passing empty file pointer
+ */
 static TermInfo *getTermInfo(FILE *fin, FILE *fmap)
 {
     TermInfo *data = NULL;
@@ -138,6 +153,11 @@ static void updateWinnerTree(WinnerTree *tree, int nodeIdx, int updateIdx, FILE 
 	}
 }
 
+/**
+ * job - pthread job for merging N (number of chunk) key buffers
+ * @endIdx: last idx of key buffer in each thread task
+ * @newFileNo: file no. of new key buffer & offset file
+ */
 static void *job(void *argv)
 {
     ThreadArgs *args = (ThreadArgs *) argv;
@@ -215,6 +235,11 @@ static void *job(void *argv)
     return NULL;
 }
 
+/**
+ * mergeKFile - main function for merge M (fileNum) key buffers
+ * @fileNum: total key buffers
+ * @conf: hash config
+ */
 void mergeKFile(int fileNum, HashConfig *conf)
 {
     config = conf;
@@ -258,7 +283,13 @@ void mergeKFile(int fileNum, HashConfig *conf)
         fin[i] = fopen(splitFile, "r");
         fmap[i] = fopen(offsetFile, "r");
     }
-    FILE *fout = stdout;
+    
+    FILE *fout;
+    if (config->output != NULL) {
+        fout = fopen(config->output, "w");
+    } else {
+        fout = stdout;
+    }
 
     TermInfo *lastOutputTerm = malloc(sizeof(TermInfo));
     lastOutputTerm->term = (char *) malloc(config->keyBufferSize);

@@ -1,3 +1,11 @@
+/**
+ * hash.c - implement concurrent hash table
+ * 
+ * Author: Frank Yu <frank85515@gmail.com>
+ * 
+ * (C) Copyright 2019 Frank Yu
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -5,12 +13,13 @@
 #include <unistd.h>
 #include <limits.h>
 #include <sys/stat.h>
-#include "hash.h"
-#include "mergesort.h"
-#include "winner_tree.h"
+
+#include <hash.h>
+#include <mergesort.h>
+#include <winner_tree.h>
 
 #ifdef __APPLE__
-#include "pthread_barrier.h"
+#include <pthread_barrier.h>
 #endif
 
 #define _HASH_KEY_BUFFER "key_buffer"
@@ -18,10 +27,10 @@
 #define _NODE_TABLE_SIZE 10000000
 
 static Hash *hash = NULL;
-static int _fileNum = 0;
-static uint _memUsed = 0;
-static int _topNodeIdx;
-pthread_mutex_t _hashLock = PTHREAD_MUTEX_INITIALIZER;
+static int _fileNum = 0; // total external key buffers
+static uint _memUsed = 0; // current memory used
+static int _topNodeIdx; // last idx for node table
+pthread_mutex_t _hashLock = PTHREAD_MUTEX_INITIALIZER; // global hash mutux lock
 
 typedef struct ThreadArgs {
     HashConfig *config;
@@ -44,6 +53,23 @@ static uint hash65(char *term)
     return hashVal;
 }
 
+static void usage()
+{
+    printf("Usage: tcount [OPTION]... [FILE]...\n");
+    printf("Counting terms / sentences from giving FILE by OPTION.\n");
+    printf("Example: ./tcount -m 400000000 text.txt\n\nCommand:\n");
+    printf ("\
+  -m                limit memory usage for tcount\n\
+  -s                expected key buffer size\n\
+  -h                hash table size\n\
+  -chunk            number of external chunks using in merge\n\
+  -parallel         number of threads needed\n\
+  -o                output in specific file\n\
+  --help            show tcount information\n\n");
+
+  exit(0);
+}
+
 HashConfig *initHashConfig(int argc, char *argv[])
 {
     HashConfig *config = malloc(sizeof(HashConfig));
@@ -52,6 +78,7 @@ HashConfig *initHashConfig(int argc, char *argv[])
     config->keyBufferSize = 2048;
     config->thread = 4;
     config->chunk = 4;
+    config->output = NULL;
 
     for (int i = 0; i < argc; i++) {
         if (strcmp(argv[i], "-m") == 0) {
@@ -69,11 +96,20 @@ HashConfig *initHashConfig(int argc, char *argv[])
         } else if (strcmp(argv[i], "-chunk") == 0) {
             config->chunk = atoi(argv[i+1]);
             i += 1;
+        } else if (strcmp(argv[i], "--help") == 0) {
+            usage();
+        } else if (strcmp(argv[i], "-o") == 0) {
+            config->output = strdup(argv[i+1]);
+            i += 1;
         }
     }
 
     if (config->thread < 1) {
         config->thread = 1;
+    }
+
+    if (config->chunk < 2) {
+        config->chunk = 2;
     }
 
     return config;
@@ -111,7 +147,7 @@ static void writeExternalBucket(HashConfig *config)
     for (int i = 0; i < _topNodeIdx; i++) {
         idx[i] = i;
     }
-    mergeSort(&hash->nodeTable, &idx, _topNodeIdx, config->hashTabSize, config->thread);
+    mergeSort(&hash->nodeTable, &idx, _topNodeIdx, config->thread);
 
     char splitFile[31], offsetFile[31];
     sprintf(splitFile, "%s_%d.rec", _HASH_KEY_BUFFER, _fileNum);
@@ -199,6 +235,12 @@ static bool insertHash(char *term, HashConfig *config)
     return true;
 }
 
+/**
+ * job - pthread job for inserting terms
+ * @config: hash config
+ * @idx: no. of pthread
+ * @filename: input file
+ */
 static void *job(void *argv)
 {
     ThreadArgs *args = (ThreadArgs *) argv;
@@ -236,6 +278,11 @@ static void *job(void *argv)
     return NULL;
 }
 
+/**
+ * batchInsertHash - main function for concurrent insert hash table
+ * @filename: input file 
+ * @config: hash config
+ */
 void batchInsertHash(char *filename, HashConfig *config)
 {
     pthread_t tids[config->thread];
