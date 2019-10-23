@@ -9,7 +9,7 @@ else
 endif
 
 run:
-	./$(TCOUNTEXE) -m 400000000 ../dataset/large_term_list.txt > result.rec
+	./$(TCOUNTEXE) -m 400000000 ../dataset/small_term_list.txt > result.txt
 
 clean:
 ifeq ($(TCOUNTEXE), $(wildcard $(TCOUNTEXE)))

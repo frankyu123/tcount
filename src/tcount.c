@@ -17,12 +17,16 @@ int main(int argc, char *argv[])
 {
     HashConfig *config = initHashConfig(argc, argv);
     initHash(config);
-    batchInsertHash(argv[argc-1], config);
+    batchInsertHash(config);
 
     if (config->output != NULL) {
         free(config->output);
     }
-    free(config);
 
+    if (config->input != NULL) {
+        free(config->input);
+    }
+
+    free(config);
     return 0;
 }

@@ -35,7 +35,6 @@ pthread_mutex_t _hashLock = PTHREAD_MUTEX_INITIALIZER; // global hash mutux lock
 typedef struct ThreadArgs {
     HashConfig *config;
     int idx;
-    char *filename;
 } ThreadArgs;
 
 static uint hash65(char *term)
@@ -72,36 +71,58 @@ static void usage()
 
 HashConfig *initHashConfig(int argc, char *argv[])
 {
+    if (argc == 1) {
+        fprintf(stderr, "Error: missing arguments\n");
+        exit(0);
+    }
+
     HashConfig *config = malloc(sizeof(HashConfig));
     config->hashTabSize = 3000;
     config->totalMem = 100000000; // Default Using MEM : approx. 100MB
     config->keyBufferSize = 2048;
     config->thread = 4;
     config->chunk = 4;
-    config->output = NULL;
+    config->output = config->input = NULL;
 
     for (int i = 0; i < argc; i++) {
+        bool flag = false;
+
         if (strcmp(argv[i], "-m") == 0) {
             config->totalMem = atol(argv[i+1]);
             i += 1;
+            flag = true;
         } else if (strcmp(argv[i], "-s") == 0) {
             config->keyBufferSize = atoi(argv[i+1]);
             i += 1;
+            flag = true;
         } else if (strcmp(argv[i], "-h") == 0) {
             config->hashTabSize = atoi(argv[i+1]);
             i += 1;
+            flag = true;
         } else if (strcmp(argv[i], "-parallel") == 0) {
             config->thread = atoi(argv[i+1]);
             i += 1;
+            flag = true;
         } else if (strcmp(argv[i], "-chunk") == 0) {
             config->chunk = atoi(argv[i+1]);
             i += 1;
+            flag = true;
         } else if (strcmp(argv[i], "--help") == 0) {
             usage();
         } else if (strcmp(argv[i], "-o") == 0) {
             config->output = strdup(argv[i+1]);
             i += 1;
+            flag = true;
         }
+
+        if (!flag && i == argc - 1) {
+            config->input = strdup(argv[i]);
+        }
+    }
+
+    if (config->input == NULL) {
+        fprintf(stderr, "Error: missing input file\n");
+        exit(0);
     }
 
     if (config->thread < 1) {
@@ -174,7 +195,7 @@ static bool insertHash(char *term, HashConfig *config)
     if (hash == NULL) {
         initHash(config);
     } else if (_topNodeIdx == _NODE_TABLE_SIZE) {
-        fprintf(stderr, "Mem usage > node table size\n");
+        fprintf(stderr, "Error: mem usage > node table size\nPlease check _NODE_TABLE_SIZE in hash.c\n");
         exit(0);
     }
     pthread_mutex_unlock(&(_hashLock));
@@ -246,11 +267,15 @@ static void *job(void *argv)
     ThreadArgs *args = (ThreadArgs *) argv;
 
     struct stat st;
-    stat(args->filename, &st);
+    stat(args->config->input, &st);
     uint size = st.st_size / args->config->thread;
     uint start = (args->idx - 1) * size;
 
-    FILE *fin = fopen(args->filename, "r");
+    FILE *fin = fopen(args->config->input, "r");
+    if (fin == NULL) {
+        fprintf(stderr, "Error: file not found\n");
+        exit(0);
+    }
     fseek(fin, start, SEEK_SET);
 
     char inputBuffer[args->config->keyBufferSize];
@@ -280,19 +305,15 @@ static void *job(void *argv)
 
 /**
  * batchInsertHash - main function for concurrent insert hash table
- * @filename: input file 
  * @config: hash config
  */
-void batchInsertHash(char *filename, HashConfig *config)
+void batchInsertHash(HashConfig *config)
 {
     pthread_t tids[config->thread];
     for (int i = 0; i < config->thread; i++) {
         ThreadArgs *args = malloc(sizeof(ThreadArgs));
         args->config = config;
         args->idx = i + 1;
-        args->filename = (char *) malloc(31);
-        memset(args->filename, '\0', 31);
-        strcpy(args->filename, filename);
         pthread_create(&tids[i], NULL, job, args);
     }
 
