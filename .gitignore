@@ -1,5 +1,5 @@
 .DS_Store
 *.dSYM
-key_buffer*
-offset*
+_buffer*
+_offset*
 tcount

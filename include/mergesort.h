@@ -3,6 +3,6 @@
 
 #include <hash.h>
 
-extern int *mergeSort(HashNodeTable **, int **, unsigned long, int);
+extern void mergeSort(HashNodeTable **, int **, int, int);
 
 #endif

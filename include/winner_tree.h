@@ -1,20 +1,16 @@
 #ifndef _WINNE_TREE_H_
 #define _WINNE_TREE_H_
 
-#include <stdbool.h>
-
-#include <hash.h>
-
-typedef struct TermInfo {
+typedef struct WinnerTreeNode {
     char *term;
     int cnt;
-} TermInfo;
+} WinnerTreeNode;
 
 typedef struct WinnerTree {
     int *nodeList;
-    TermInfo *nodeValue;
+    WinnerTreeNode *nodeValue;
 } WinnerTree;
 
-extern void mergeKFile(int, HashConfig *);
+extern void mergeKFile(int, int, int, char *);
 
 #endif

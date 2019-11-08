@@ -1,24 +1,16 @@
 #ifndef _HASH_H_
 #define _HASH_H_
 
-#include <stdbool.h>
-#include <sys/types.h>
-
 typedef struct HashConfig {
     int hashTabSize;
-    uint totalMem;
     int keyBufferSize;
-    int thread;
-    int chunk;
-    char *output;
-    char *input;
+    int totalLimitMem;
 } HashConfig;
 
 typedef struct HashNodeTable {
     char *term;
     int cnt;
     int next;
-    pthread_mutex_t lock;
 } HashNodeTable;
 
 typedef struct Hash {
@@ -26,8 +18,12 @@ typedef struct Hash {
     HashNodeTable *nodeTable;
 } Hash;
 
-extern HashConfig *initHashConfig(int, char *[]);
+extern int getExternalKeyBufferNum();
+extern int getTopNodeIdx();
+extern void writeExternalBucket(int, HashConfig *);
+extern HashConfig *initHashConfig();
 extern void initHash(HashConfig *);
-extern void batchInsertHash(HashConfig *);
+extern void clearHash();
+extern void insertHash(char *, int, HashConfig *);
 
 #endif
